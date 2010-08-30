@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+	<group android:id="@+id/menu_grp_main" android:menuCategory="container">
+		<item android:title="@string/sync" android:id="@+id/sync"
+			android:icon="@drawable/ic_menu_refresh"></item>
+		<item android:id="@+id/batch_edit" android:title="@string/menu_edit"
+			android:icon="@drawable/ic_menu_allfriends"></item>
+		<!-- <item android:id="@+id/settings" android:icon="@android:drawable/ic_menu_preferences"
+			android:title="@string/settings" android:visible="false"></item> -->
+	</group>
+	<group android:id="@+id/menu_grp_edit" android:menuCategory="container"
+		android:visible="false">
+		<item android:title="@string/menu_view"
+			android:icon="@android:drawable/ic_menu_close_clear_cancel"
+			android:id="@+id/batch_exit" />
+	</group>
+</menu>

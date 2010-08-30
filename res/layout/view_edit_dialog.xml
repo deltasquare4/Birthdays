@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content" android:layout_height="wrap_content">
+	<TextView android:id="@+id/lblBirthday" android:text="Birthday: "
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_alignParentTop="true" android:layout_alignParentLeft="true" />
+	<DatePicker android:id="@+id/birthdayPicker"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_below="@id/lblBirthday" />
+	<CheckBox android:text="Ignore Year" android:id="@+id/chkIgnoreYear"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_below="@id/birthdayPicker" android:visibility="gone" />
+	<CheckBox android:text="Calendar Sync" android:id="@+id/chkReminder"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_below="@id/chkIgnoreYear" />
+	<LinearLayout android:layout_width="fill_parent"
+		android:layout_below="@id/chkReminder" android:layout_height="wrap_content">
+		<Button android:text="Set" android:id="@+id/btnOk"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:layout_weight="1" />
+		<Button android:text="Cancel" android:id="@+id/btnCancel"
+			android:layout_width="fill_parent" android:layout_height="wrap_content"
+			android:layout_weight="1" />
+	</LinearLayout>
+</RelativeLayout>

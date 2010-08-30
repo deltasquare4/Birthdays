@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:title="@string/pref_group_calendar">
+		<EditTextPreference android:summary="@string/pref_calendar_name_summary"
+			android:key="calendarName" android:title="@string/pref_calendar_name_name"
+			android:name="@string/pref_calendar_name_name" android:defaultValue="Birthdays"></EditTextPreference>
+	</PreferenceCategory>
+</PreferenceScreen>
