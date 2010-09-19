@@ -16,6 +16,8 @@
 
 package com.rexmenpara.birthdays.db;
 
+import com.rexmenpara.birthdays.util.ContextManager;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -36,7 +38,7 @@ public class DBAdapter {
 
 	private static final String DATABASE_NAME = "birthdays";
 	private static final String DATABASE_TABLE = "birthdays";
-	private static final int DATABASE_VERSION = 1;
+	private static final int DATABASE_VERSION = 2;
 
 	public static final int BIRTHDAY_REMINDER_TRUE = 1;
 	public static final int BIRTHDAY_REMINDER_FALSE = 0;
@@ -49,14 +51,19 @@ public class DBAdapter {
 			+ " integer not null, " + KEY_EVENTID + " text, " + KEY_LASTSYNC
 			+ " integer);";
 
-	private final Context context;
-
 	private DatabaseHelper DBHelper;
 	private SQLiteDatabase db;
+	private static DBAdapter dbAdapter;
 
-	public DBAdapter(Context ctx) {
-		this.context = ctx;
-		DBHelper = new DatabaseHelper(context);
+	public static DBAdapter getInstance() {
+		if (dbAdapter == null) {
+			dbAdapter = new DBAdapter();
+		}
+		return dbAdapter;
+	}
+
+	private DBAdapter() {
+		DBHelper = new DatabaseHelper(ContextManager.getContext());
 	}
 
 	private static class DatabaseHelper extends SQLiteOpenHelper {

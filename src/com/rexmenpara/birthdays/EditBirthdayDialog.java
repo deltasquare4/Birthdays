@@ -16,7 +16,10 @@
 
 package com.rexmenpara.birthdays;
 
+import java.text.ParseException;
 import java.util.Date;
+
+import com.rexmenpara.birthdays.util.DateUtility;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -33,87 +36,50 @@ public class EditBirthdayDialog extends Activity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		// Blur the activity behind dialog
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND,
-				WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
-
-		setContentView(R.layout.view_edit_dialog);
-
-		// Get the arguments passed
-		String birthday = getIntent().getStringExtra("birthday");
-		boolean reminder = getIntent().getBooleanExtra("reminder", true);
-		long rowId = getIntent().getLongExtra("rowId", -1);
-
-		String[] split = birthday.split("-");
-
-		DatePicker picker = (DatePicker) this.findViewById(R.id.birthdayPicker);
 		try {
-			// To handle it when year is not present
-			if (split.length == 4) {
-				split[0] = split[1];
-				split[1] = split[2];
-				split[2] = split[3];
-			}
+			// Blur the activity behind dialog
+			getWindow().setFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND,
+					WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
 
-			int year = getYear(split[0]);
-			int month = getMonth(split[1]);
-			int day = getDate(split[2]);
+			setContentView(R.layout.view_edit_dialog);
 
-			if (year == -1) {
+			// Get the arguments passed
+			String birthday = getIntent().getStringExtra("birthday");
+			boolean reminder = getIntent().getBooleanExtra("reminder", true);
+			long rowId = getIntent().getLongExtra("rowId", -1);
+
+			DatePicker picker = (DatePicker) this
+					.findViewById(R.id.birthdayPicker);
+
+			Date date = DateUtility.parseDate(birthday);
+
+			int year = date.getYear();
+
+			if (year < 0) {
 				// Show the ignore year checkbox
 				CheckBox chkIgnoreYear = (CheckBox) this
 						.findViewById(R.id.chkIgnoreYear);
 				chkIgnoreYear.setVisibility(View.VISIBLE);
 				chkIgnoreYear.setChecked(true);
-				year = 1900 + new Date().getYear();
+				year = new Date().getYear();
 			}
+
+			year = 1900 + year;
+			
 			// Month starts from 0 for DatePicker
-			picker.updateDate(year, month, day);
-		} catch (Exception e) {
+			picker.updateDate(year, date.getMonth(), date.getDate());
 
-		}
+			CheckBox chkReminder = (CheckBox) this
+					.findViewById(R.id.chkReminder);
+			chkReminder.setChecked(reminder);
 
-		CheckBox chkReminder = (CheckBox) this.findViewById(R.id.chkReminder);
-		chkReminder.setChecked(reminder);
-
-		Button btnSet = (Button) findViewById(R.id.btnOk);
-		btnSet.setOnClickListener(new BtnListener(true, rowId));
-		Button btnCancel = (Button) findViewById(R.id.btnCancel);
-		btnCancel.setOnClickListener(new BtnListener(false, rowId));
-	}
-
-	private int getYear(String year) {
-		if ("".equals(year)) {
-			return -1;
-		}
-
-		int resYear = Integer.parseInt(year);
-
-		if (resYear < 1900 || resYear > 2100) {
-			resYear = -1;
-		}
-
-		return resYear;
-	}
-
-	private int getMonth(String month) {
-		int resMonth = Integer.parseInt(month) - 1;
-
-		if (resMonth >= 1 && resMonth <= 12) {
-			return resMonth;
-		} else {
-			resMonth = new Date().getMonth();
-			return resMonth;
-		}
-	}
-
-	private int getDate(String date) {
-		int resDate = Integer.parseInt(date);
-
-		if (resDate >= 1 && resDate <= 31) {
-			return resDate;
-		} else {
-			return 1;
+			Button btnSet = (Button) findViewById(R.id.btnOk);
+			btnSet.setOnClickListener(new BtnListener(true, rowId));
+			Button btnCancel = (Button) findViewById(R.id.btnCancel);
+			btnCancel.setOnClickListener(new BtnListener(false, rowId));
+		} catch (ParseException e) {
+			Thread.getDefaultUncaughtExceptionHandler().uncaughtException(
+					Thread.currentThread(), e);
 		}
 	}
 

@@ -21,6 +21,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import com.rexmenpara.birthdays.models.Constants;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -39,9 +41,7 @@ import android.util.Log;
  */
 public class CalendarHelper {
 
-	private static final String TAG = "Birthdays";
-
-	private class Calendar {
+	private class ACalendar {
 		public static final String KEY_ID = "_id";
 		public static final String KEY_NAME = "name";
 		public static final String KEY_DISPLAYNAME = "displayName";
@@ -59,7 +59,7 @@ public class CalendarHelper {
 		public static final String KEY_DISPLAY_ORDER = "displayOrder";
 	}
 
-	private class Event {
+	private class AEvent {
 		public static final String KEY_ID = "_id";
 		public static final String KEY_CALENDAR_ID = "calendar_id";
 		public static final String KEY_TITLE = "title";
@@ -68,6 +68,8 @@ public class CalendarHelper {
 		public static final String KEY_END = "dtend";
 		public static final String KEY_ALLDAY = "allDay";
 		public static final String KEY_REPEAT_RULE = "rrule";
+		public static final String KEY_EVENT_TIME_ZONE = "eventTimezone";
+		public static final String KEY_DURATION = "duration";
 	}
 
 	static String contentProvider;
@@ -75,8 +77,9 @@ public class CalendarHelper {
 	static Uri eventsUri;
 	static Uri calendars;
 	private final Context context;
+	private String timezone = null;
 
-	public CalendarHelper(Context context) {
+	public CalendarHelper() {
 
 		if (Build.VERSION.RELEASE.contains("2.2"))
 			contentProvider = "com.android.calendar";
@@ -89,11 +92,14 @@ public class CalendarHelper {
 				contentProvider));
 		calendars = Uri.parse(String.format("content://%s/calendars",
 				contentProvider));
-		this.context = context;
+		this.context = ContextManager.getContext();
+
+		this.timezone = getCurrentTimeZoneString();
 	}
 
 	public Cursor getAllCalendars() {
-		String[] projection = new String[] { Calendar.KEY_ID, Calendar.KEY_NAME };
+		String[] projection = new String[] { ACalendar.KEY_ID,
+				ACalendar.KEY_NAME };
 
 		Cursor cursor = context.getContentResolver().query(calendars,
 				projection, null, null, null);
@@ -102,7 +108,7 @@ public class CalendarHelper {
 	}
 
 	public String createCalendar(String name) {
-		// Check if a calendar is already created
+		// Check if a calendar application exists
 		PackageInfo pInfo = null;
 		try {
 			pInfo = context.getPackageManager().getPackageInfo(
@@ -113,34 +119,22 @@ public class CalendarHelper {
 			return null;
 		}
 
+		// Remove old calendars and events
+		resetCalendars();
+
 		ContentValues calendar = new ContentValues();
 
-		String[] ids = TimeZone.getAvailableIDs();
-		String timezone = null;
-		for (String id : ids) {
-			if (TimeZone.getTimeZone(id).equals(TimeZone.getDefault())) {
-				timezone = id;
-			}
-		}
-
-		calendar.put(Calendar.KEY_NAME, name);
-		calendar.put(Calendar.KEY_DISPLAYNAME, name);
-		calendar.put(Calendar.KEY_ACCESS_LEVEL, 700);
-		calendar.put(Calendar.KEY_TIMEZONE, timezone);
-		calendar.put(Calendar.KEY_OWNER_ACCOUNT, "Birthdays");
-		calendar.put(Calendar.KEY_ACTIVE, 1);
-		calendar.put(Calendar.KEY_SYNC_EVENTS, 1);
-		calendar.put(Calendar.KEY_COLOR, -5159922);
-		calendar.put(Calendar.KEY_SYNC_ACCOUNT, "Birthdays");
-		calendar
-				.put(Calendar.KEY_SYNC_ACCOUNT_TYPE, "com.rexmenpara.birthdays");
-		Uri result = null;
-		try {
-			result = context.getContentResolver().insert(calendars, calendar);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
+		calendar.put(ACalendar.KEY_NAME, name);
+		calendar.put(ACalendar.KEY_DISPLAYNAME, name);
+		calendar.put(ACalendar.KEY_ACCESS_LEVEL, 700);
+		calendar.put(ACalendar.KEY_TIMEZONE, this.timezone);
+		calendar.put(ACalendar.KEY_OWNER_ACCOUNT, "Birthdays");
+		calendar.put(ACalendar.KEY_ACTIVE, 1);
+		calendar.put(ACalendar.KEY_SYNC_EVENTS, 1);
+		calendar.put(ACalendar.KEY_COLOR, -5159922);
+		calendar.put(ACalendar.KEY_SYNC_ACCOUNT, "Birthdays");
+		calendar.put(ACalendar.KEY_SYNC_ACCOUNT_TYPE, Constants.PACKAGE);
+		Uri result = context.getContentResolver().insert(calendars, calendar);
 
 		String something = result.getLastPathSegment();
 
@@ -148,10 +142,10 @@ public class CalendarHelper {
 
 		// Handle the fields only suppored by HTC Sense
 		try {
-			calendar.put(Calendar.KEY_SYNC_SOURCE, 1);
-			calendar.put(Calendar.KEY_DISPLAY_ORDER, 0);
+			calendar.put(ACalendar.KEY_SYNC_SOURCE, 1);
+			calendar.put(ACalendar.KEY_DISPLAY_ORDER, 0);
 			int rowsUpdated = context.getContentResolver().update(result,
-					calendar, Calendar.KEY_ID + "=" + something, null);
+					calendar, ACalendar.KEY_ID + "=" + something, null);
 		} catch (Exception e) {
 			// Ignore
 		}
@@ -159,15 +153,65 @@ public class CalendarHelper {
 		return something;
 	}
 
+	public boolean verifyCalendar(String id) {
+		String[] projection = new String[] { ACalendar.KEY_ID };
+
+		Cursor cursor = context.getContentResolver().query(calendars,
+				projection, ACalendar.KEY_ID + "=" + id, null, null);
+
+		boolean result = cursor.moveToFirst();
+		cursor.close();
+
+		return result;
+	}
+
+	public void resetCalendars() {
+		// Get IDs of all the calendars created by the application
+		String[] projection = new String[] { ACalendar.KEY_ID };
+
+		Cursor cursor = context.getContentResolver().query(
+				calendars,
+				projection,
+				ACalendar.KEY_SYNC_ACCOUNT_TYPE + "='" + Constants.PACKAGE
+						+ "'", null, null);
+
+		try {
+			// Delete all the events
+			while (cursor.moveToNext()) {
+				int calendarId = cursor.getInt(0);
+
+				Cursor eventCursor = context.getContentResolver().query(
+						eventsUri, new String[] { AEvent.KEY_ID },
+						AEvent.KEY_CALENDAR_ID + "=" + calendarId, null, null);
+
+				while (eventCursor.moveToNext()) {
+					int eventId = eventCursor.getInt(0);
+					Uri tmpUri = Uri.withAppendedPath(eventsUri, String
+							.valueOf(eventId));
+					context.getContentResolver().delete(tmpUri, null, null);
+				}
+				eventCursor.close();
+
+				// Delete all the calendars
+				Uri tmpUri = Uri.withAppendedPath(calendars, String
+						.valueOf(calendarId));
+				context.getContentResolver().delete(tmpUri, null, null);
+			}
+
+			cursor.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public String createEvent(String calendarId, String name, String birthday) {
 		ContentValues event = new ContentValues();
 
 		// Process the birth date and add year and convert it into UNIX time
 		String something = null;
-		SimpleDateFormat srcFormatter = new SimpleDateFormat("yyyy-MM-dd");
-
 		try {
-			Date date = srcFormatter.parse(birthday);
+			Date date = DateUtility.parseDate(birthday);
 			Date now = new Date();
 			date.setYear(now.getYear());
 
@@ -175,32 +219,36 @@ public class CalendarHelper {
 				date.setYear(date.getYear() + 1);
 			}
 
-			long unixTime = date.getTime();
-			event.put(Event.KEY_CALENDAR_ID, Integer.parseInt(calendarId));
-			event.put(Event.KEY_TITLE, name);
-			event.put(Event.KEY_DESCRIPTION, name + "'s Birthday");
-			event.put(Event.KEY_BEGIN, unixTime);
-			event.put(Event.KEY_END, unixTime);
-			event.put(Event.KEY_ALLDAY, 1);
+			long unixTimeStart = Date.UTC(date.getYear(), date.getMonth(), date
+					.getDate(), 0, 0, 0);
+
+			event.put(AEvent.KEY_CALENDAR_ID, Integer.parseInt(calendarId));
+			event.put(AEvent.KEY_TITLE, name);
+			event.put(AEvent.KEY_DESCRIPTION, name + "'s Birthday");
+			event.put(AEvent.KEY_BEGIN, unixTimeStart);
+			event.put(AEvent.KEY_ALLDAY, 1);
+			event.put(AEvent.KEY_EVENT_TIME_ZONE, "UTC");
+			event.put(AEvent.KEY_DURATION, "P1D");
+			event.put(AEvent.KEY_REPEAT_RULE, "FREQ=YEARLY;WKST=MO");
 			Uri result = context.getContentResolver().insert(eventsUri, event);
 
 			something = result.getLastPathSegment();
 
 		} catch (ParseException e) {
-			Log.e(TAG, "An error occured while parsing the birthdate.", e);
+			Log.e(Constants.TAG,
+					"An error occured while parsing the birthdate.", e);
 		}
 
 		return something;
 	}
 
-	public void updateEvent(String eventId, String name, String birthday) {
+	public void updateEvent(String eventId, String calendarId, String name,
+			String birthday) {
 		ContentValues event = new ContentValues();
 
 		// Process the birth date and add year and convert it into UNIX time
-		SimpleDateFormat srcFormatter = new SimpleDateFormat("yyyy-MM-dd");
-
 		try {
-			Date date = srcFormatter.parse(birthday);
+			Date date = DateUtility.parseDate(birthday);
 			Date now = new Date();
 			date.setYear(now.getYear());
 
@@ -208,21 +256,50 @@ public class CalendarHelper {
 				date.setYear(date.getYear() + 1);
 			}
 
-			long unixTime = date.getTime();
-			event.put(Event.KEY_TITLE, name);
-			event.put(Event.KEY_DESCRIPTION, name + "'s Birthday");
-			event.put(Event.KEY_BEGIN, unixTime);
-			event.put(Event.KEY_END, unixTime);
-			context.getContentResolver().update(eventsUri, event,
-					Event.KEY_ID + "=" + eventId, null);
+			long unixTimeStart = date.getTime();
+
+			event.put(AEvent.KEY_CALENDAR_ID, Integer.parseInt(calendarId));
+			event.put(AEvent.KEY_TITLE, name);
+			event.put(AEvent.KEY_DESCRIPTION, name + "'s Birthday");
+			event.put(AEvent.KEY_BEGIN, unixTimeStart);
+			event.put(AEvent.KEY_ALLDAY, 1);
+			event.put(AEvent.KEY_EVENT_TIME_ZONE, this.timezone);
+			event.put(AEvent.KEY_DURATION, "P1D");
+			event.put(AEvent.KEY_REPEAT_RULE, "FREQ=YEARLY;WKST=MO");
+
+			Uri tmpUri = Uri.withAppendedPath(eventsUri, eventId);
+			context.getContentResolver().update(tmpUri, event, null, null);
 
 		} catch (ParseException e) {
-			Log.e(TAG, "An error occured while parsing the birthdate.", e);
+			Log.e(Constants.TAG,
+					"An error occured while parsing the birthdate.", e);
 		}
 	}
 
 	public void deleteEvent(String eventId) {
 		context.getContentResolver().delete(eventsUri,
-				Event.KEY_ID + "=" + eventId, null);
+				AEvent.KEY_ID + "=" + eventId, null);
+	}
+
+	public boolean verifyEvent(String id) {
+		String[] projection = new String[] { ACalendar.KEY_ID };
+
+		Cursor cursor = context.getContentResolver().query(eventsUri,
+				projection, AEvent.KEY_ID + "=" + id, null, null);
+
+		boolean result = cursor.moveToFirst();
+		cursor.close();
+
+		return result;
+	}
+
+	private String getCurrentTimeZoneString() {
+		String[] ids = TimeZone.getAvailableIDs();
+		for (String id : ids) {
+			if (TimeZone.getTimeZone(id).equals(TimeZone.getDefault())) {
+				return id;
+			}
+		}
+		return null;
 	}
 }

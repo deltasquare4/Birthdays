@@ -20,6 +20,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import android.util.Log;
+
+import com.rexmenpara.birthdays.util.DateUtility;
+import com.rexmenpara.birthdays.util.ErrorReportHandler;
+
 public class BirthdayBean {
 	private long rowId = -1;
 	private String name = null;
@@ -61,7 +66,6 @@ public class BirthdayBean {
 		this.birthday = birthday;
 
 		// Set daysRemaining
-		SimpleDateFormat srcFormatter = new SimpleDateFormat("yyyy-MM-dd");
 		try {
 			// Format the date to omit the year
 			Date now = new Date();
@@ -69,18 +73,7 @@ public class BirthdayBean {
 			now.setMinutes(0);
 			now.setSeconds(0);
 
-			Date date = null;
-			try {
-				date = srcFormatter.parse(birthday);
-			} catch (ParseException e) {
-				String[] split = birthday.split("-");
-				if (split.length == 4) {
-					birthday = "0100-" + split[2] + "-" + split[3];
-					date = srcFormatter.parse(birthday);
-				} else {
-					throw e;
-				}
-			}
+			Date date = DateUtility.parseDate(birthday);
 
 			int year = date.getYear();
 			date.setYear(now.getYear());
@@ -93,12 +86,14 @@ public class BirthdayBean {
 			setAge(date.getYear() - year);
 
 			long diff = date.getTime() - now.getTime();
-			int diffInDays = (int) (diff / (1000 * 60 * 60 * 24));
+			
+			// Casting to float to avoid rounding off error
+			int diffInDays = Math.round(diff / (float)(1000 * 60 * 60 * 24));
 
 			setDaysRemaining(diffInDays);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Log.e(Constants.TAG,
+					"An error occured while parsing the birthdate.", e);
 		}
 	}
 
