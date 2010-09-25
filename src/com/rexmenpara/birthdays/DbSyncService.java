@@ -16,6 +16,9 @@
 
 package com.rexmenpara.birthdays;
 
+import java.text.ParseException;
+import java.util.Date;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Handler;
@@ -24,6 +27,8 @@ import android.provider.ContactsContract.CommonDataKinds.Event;
 
 import com.rexmenpara.birthdays.db.DBAdapter;
 import com.rexmenpara.birthdays.util.ContextManager;
+import com.rexmenpara.birthdays.util.DateUtility;
+import com.rexmenpara.birthdays.util.ErrorReportHandler;
 
 /**
  * Synchronizes birthdays database with android contacts
@@ -68,6 +73,13 @@ public class DbSyncService extends Thread {
 
 				int dateCol = cursor.getColumnIndex(Event.START_DATE);
 				String origDateString = cursor.getString(dateCol);
+
+				try {
+					Date date = DateUtility.parseDate(origDateString);
+					origDateString = DateUtility.getStandardDate(date);
+				} catch (ParseException e) {
+					ErrorReportHandler.collectData(e.getMessage());
+				}
 
 				// Enter the birthday data in the database
 				db.syncEntries(name, contactId, origDateString,

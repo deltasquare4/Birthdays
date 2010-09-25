@@ -54,6 +54,8 @@ public class CalendarHelper {
 		public static final String KEY_REMINDER_DURATION = "reminder_duration";
 		public static final String KEY_SYNC_ACCOUNT = "_sync_account";
 		public static final String KEY_SYNC_ACCOUNT_TYPE = "_sync_account_type";
+		public static final String KEY_SYNC_TIME = "_sync_time";
+		public static final String KEY_URL = "url";
 		public static final String KEY_SYNC_EVENTS = "sync_events";
 		public static final String KEY_SYNC_SOURCE = "sync_source";
 		public static final String KEY_DISPLAY_ORDER = "displayOrder";
@@ -81,7 +83,7 @@ public class CalendarHelper {
 
 	public CalendarHelper() {
 
-		if (Build.VERSION.RELEASE.contains("2.2"))
+		if (Build.VERSION.SDK_INT >= 8)
 			contentProvider = "com.android.calendar";
 		else
 			contentProvider = "calendar";
@@ -133,19 +135,23 @@ public class CalendarHelper {
 		calendar.put(ACalendar.KEY_SYNC_EVENTS, 1);
 		calendar.put(ACalendar.KEY_COLOR, -5159922);
 		calendar.put(ACalendar.KEY_SYNC_ACCOUNT, "Birthdays");
-		calendar.put(ACalendar.KEY_SYNC_ACCOUNT_TYPE, Constants.PACKAGE);
+		calendar.put(ACalendar.KEY_SYNC_ACCOUNT_TYPE, "com.google");
 		Uri result = context.getContentResolver().insert(calendars, calendar);
 
 		String something = result.getLastPathSegment();
 
 		calendar = new ContentValues();
 
-		// Handle the fields only suppored by HTC Sense
+		// Handle the fields only supported by HTC Sense
 		try {
-			calendar.put(ACalendar.KEY_SYNC_SOURCE, 1);
+			calendar.put(ACalendar.KEY_SYNC_SOURCE, 3);
 			calendar.put(ACalendar.KEY_DISPLAY_ORDER, 0);
+			calendar.put(ACalendar.KEY_SYNC_TIME, new Date().getTime());
+			calendar.put(ACalendar.KEY_URL, "http://www.rakshitmenpara.com");
 			int rowsUpdated = context.getContentResolver().update(result,
-					calendar, ACalendar.KEY_ID + "=" + something, null);
+					calendar, null, null);
+			context.getContentResolver().
+			Log.d(Constants.TAG, String.valueOf(rowsUpdated));
 		} catch (Exception e) {
 			// Ignore
 		}

@@ -75,8 +75,14 @@ public class BirthdayBean {
 
 			Date date = DateUtility.parseDate(birthday);
 
-			int year = date.getYear();
-			date.setYear(now.getYear());
+			int year = date.getYear() > 0 ? date.getYear() : 0;
+
+			// Bug: If milliseconds are negative from the beginning, the don't
+			// roll over to positive when a year is set
+			// date.setYear(now.getYear());
+
+			// Creating a new date instead
+			date = new Date(now.getYear(), date.getMonth(), date.getDate());
 
 			if (date.before(now)) {
 				date.setYear(date.getYear() + 1);
@@ -86,14 +92,15 @@ public class BirthdayBean {
 			setAge(date.getYear() - year);
 
 			long diff = date.getTime() - now.getTime();
-			
+
 			// Casting to float to avoid rounding off error
-			int diffInDays = Math.round(diff / (float)(1000 * 60 * 60 * 24));
+			int diffInDays = Math.round(diff / (float) (1000 * 60 * 60 * 24));
 
 			setDaysRemaining(diffInDays);
 		} catch (Exception e) {
 			Log.e(Constants.TAG,
 					"An error occured while parsing the birthdate.", e);
+			ErrorReportHandler.collectData("Invalid date - " + birthday);
 		}
 	}
 

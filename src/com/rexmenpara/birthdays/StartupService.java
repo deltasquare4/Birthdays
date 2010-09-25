@@ -24,8 +24,8 @@ public class StartupService {
 			Thread.setDefaultUncaughtExceptionHandler(newHandler);
 		}
 
-		// Submit pending error reports
-		mainActivity.runOnUiThread(newHandler);
+		// TODO: Submit pending error reports
+		//mainActivity.runOnUiThread(newHandler);
 
 		// read current version
 		int latestSetVersion = Preferences.getCurrentVersion();

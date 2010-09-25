@@ -8,7 +8,7 @@ import android.webkit.WebView;
 
 public final class UpgradeService {
 
-	private static final int V1_5_R5 = 8;
+	private static final int V1_5_R6 = 11;
 	private static final int V1_5 = 5;
 	private static final int V1_1 = 4;
 	private static final int V1_0 = 1;
@@ -23,7 +23,7 @@ public final class UpgradeService {
 	 */
 	public void performUpgrade(final Context context, final int from) {
 
-		if (from < V1_5_R5) {
+		if (from < V1_5_R6) {
 			upgradeFromV15Calendar(context);
 		}
 
@@ -44,15 +44,16 @@ public final class UpgradeService {
 
 		StringBuilder changeLog = new StringBuilder();
 
-		if (from <= V1_5_R5)
+		if (from <= V1_5_R6)
 			newVersionString(
 					changeLog,
-					"1.5.R4 (September 19, 2010)",
+					"1.5.R6 (September 20, 2010)",
 					new String[] {
+							"Fixed 'Invalid Birthday' bug.",
 							"Fixed crashs on Droid X.",
 							"Fixed the bug where birthday events were a day early",
 							"Better calendar cleanup", });
-		if (from >= V1_5_R5 && from < V1_5)
+		if (from >= V1_5_R6 && from < V1_5)
 			newVersionString(
 					changeLog,
 					"1.5 (September 7, 2010)",

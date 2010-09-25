@@ -20,6 +20,7 @@ import java.text.ParseException;
 import java.util.Date;
 
 import com.rexmenpara.birthdays.util.DateUtility;
+import com.rexmenpara.birthdays.util.ErrorReportHandler;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -55,7 +56,7 @@ public class EditBirthdayDialog extends Activity {
 
 			int year = date.getYear();
 
-			if (year < 0) {
+			if (year <= 0) {
 				// Show the ignore year checkbox
 				CheckBox chkIgnoreYear = (CheckBox) this
 						.findViewById(R.id.chkIgnoreYear);
@@ -78,8 +79,7 @@ public class EditBirthdayDialog extends Activity {
 			Button btnCancel = (Button) findViewById(R.id.btnCancel);
 			btnCancel.setOnClickListener(new BtnListener(false, rowId));
 		} catch (ParseException e) {
-			Thread.getDefaultUncaughtExceptionHandler().uncaughtException(
-					Thread.currentThread(), e);
+			ErrorReportHandler.collectData(e.getMessage());
 		}
 	}
 
@@ -102,7 +102,8 @@ public class EditBirthdayDialog extends Activity {
 				CheckBox chkIgnoreYear = (CheckBox) EditBirthdayDialog.this
 						.findViewById(R.id.chkIgnoreYear);
 
-				String year = chkIgnoreYear.isChecked() ? "-" : String
+				// Set year to "0000" in case it's not available
+				String year = chkIgnoreYear.isChecked() ? "0000" : String
 						.valueOf(picker.getYear());
 				String month = picker.getMonth() > 8 ? (1 + picker.getMonth())
 						+ "" : "0" + (1 + picker.getMonth());

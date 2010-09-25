@@ -66,6 +66,21 @@ public class ErrorReportHandler implements UncaughtExceptionHandler, Runnable {
 		mApp.runOnUiThread(this);
 	}
 
+	public static void collectData(String data) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("----------------------------------\n");
+		sb.append(data);
+		sb.append("----------------------------------\n\n");
+
+		try {
+			ErrorReportHandler handler = (ErrorReportHandler) Thread
+					.getDefaultUncaughtExceptionHandler();
+			handler.saveDebugReport(data);
+		} catch (Exception e) {
+			// Ignore
+		}
+	}
+
 	private String generateDebugReport(Throwable e) {
 		String report = "";
 
