@@ -29,6 +29,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
@@ -126,14 +127,18 @@ public class CalendarHelper {
 
 		ContentValues calendar = new ContentValues();
 
+		int color = Color.RED;
+		// Ensure the alpha is set to max
+		color |= 0xff000000;
+
 		calendar.put(ACalendar.KEY_NAME, name);
 		calendar.put(ACalendar.KEY_DISPLAYNAME, name);
-		calendar.put(ACalendar.KEY_ACCESS_LEVEL, 700);
 		calendar.put(ACalendar.KEY_TIMEZONE, this.timezone);
+		calendar.put(ACalendar.KEY_ACCESS_LEVEL, 700);
+		calendar.put(ACalendar.KEY_COLOR, color);
+
 		calendar.put(ACalendar.KEY_OWNER_ACCOUNT, "Birthdays");
-		calendar.put(ACalendar.KEY_ACTIVE, 1);
 		calendar.put(ACalendar.KEY_SYNC_EVENTS, 1);
-		calendar.put(ACalendar.KEY_COLOR, -5159922);
 		calendar.put(ACalendar.KEY_SYNC_ACCOUNT, "Birthdays");
 		calendar.put(ACalendar.KEY_SYNC_ACCOUNT_TYPE, "com.google");
 		Uri result = context.getContentResolver().insert(calendars, calendar);
@@ -150,7 +155,6 @@ public class CalendarHelper {
 			calendar.put(ACalendar.KEY_URL, "http://www.rakshitmenpara.com");
 			int rowsUpdated = context.getContentResolver().update(result,
 					calendar, null, null);
-			context.getContentResolver().
 			Log.d(Constants.TAG, String.valueOf(rowsUpdated));
 		} catch (Exception e) {
 			// Ignore

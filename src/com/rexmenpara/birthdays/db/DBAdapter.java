@@ -56,10 +56,7 @@ public class DBAdapter {
 	private static DBAdapter dbAdapter;
 
 	public static DBAdapter getInstance() {
-		if (dbAdapter == null) {
-			dbAdapter = new DBAdapter();
-		}
-		return dbAdapter;
+		return new DBAdapter();
 	}
 
 	private DBAdapter() {
